@@ -1,13 +1,14 @@
 Introduction
 ============
-Manage many mariadb/mysql server is kind of hassle, and there is no high efficient web management tools to manage multiple mysql/mariadb server effectively. Especially DBA required to access all database servers via different cloud platform. This Repository introduce some database administration philosophy and provide some toolkit/guidance. It take lot of effort but it should working well.
+Manage many mariadb/mysql server is kind of hassle, if there is a few dba in your environment, there is no high efficient web management tools to manage multiple mysql/mariadb server effectively. Especially the DBA required to access all database servers via different cloud platform. To overcome this obstacle I'm write create this repository, it involve many server configuration, and some php programming.It take lot of effort, and a few server/VM to do that. But it should working well cause I did it.
 
 Goal
 ====
-1. DBA can centralize access all DB server via web interface
+1. Allow DBA centralize access all DB server via web interface
 2. DBA user centralized managed by LDAP
 3. Web session secure by single sign on technology
-
+4. We can suspend DBA, or change DBA password easily
+5. It is secure
 
 Requirements
 ============
