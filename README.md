@@ -111,8 +111,37 @@ Valid Redirect URIs = https://192.168.0.100/*, https://WAS_public_URL/*
 
 Configure WAS To Support Keycloak and Run Session as PHP-FPM
 ==================================
-Instead of apache, we will use nginx cause it can support multiple php-fpm better.
+1. ssh into 192.168.0.100 (WAS)
+2. Instead of apache, we will use nginx cause it can support multiple php-fpm better.
 ```
 sudo apt remove apache2
 sudo apt install nginx php-fpm7.2 
+sudo mv  /etc/php/7.2/fpm/php-fpm.conf  /etc/php/7.2/fpm/php-fpm.conf-backup
+sudo mkdir /var/php-fpm
+sudo chmod -R 777 /var/php-fpm
 ```
+2. Put php-fpm.conf from this repository as `/etc/php/7.2/fpm/php-fpm.conf`
+3. Put startfpm.sh from this repository as `/usr/local/bin/startfpm.sh`
+4. run command `sudo chmod +x /usr/local/bin/startfpm.sh`
+5. Extract db.zip from this repository become `/var/www/html/db`, edit `/var/www/html/db/setting.php` according your parameter.
+6. We need to make html folder writable by everyone `sudo chmod -R 777 /var/www/html`, cause we need symlink db by individual user
+7. Copy content of nginx.conf in this repository, replace content in /etc/nginx/sites-enable/default (if you have ssl, you can modify according your environment). 
+8. Restart nginx: `sudo service nginx restart`
+9. switch to dba1, ensure `mysql -h 192.168.0.10` work as expected, then run `/usr/local/bin/startfpm.sh start`. One dedicated php-fpm daemon will run at background, dedicated dba1.log,dba1.pid,dba1.socket created at /var/php-fpm
+10. open browser, browse to http://192.168.0.100/dba1, it will redirect to single sign on server for authentication. 
+11. once authenticated it will redirect back to http://192.168.0.100/dba1/adminer.php
+12. You will notice db1 and db2 appear in this list, and you can type your user name 'dba1', with any password to login.
+13. you can use another browser, browse to http://192.168.0.100/dba1/adminer.php, it will redirect you back to http://192.168.0.200/auth
+ (Mean it protected)
+14. You can get 2nd user (dba2) ssh into WAS, run `/usr/local/bin/startfom.sh`, then use 2nd browser access to http://192.168.0.100/dba2/adminer.php, then login via single sign on server. 
+15. You will notice browser 1 (login dba1) cannot access to http://192.168.0.100/dba2/adminer.php, same with browser 2 (dba2) cannot access into http://192.168.0.100/dba1/adminer.php
+
+
+
+Others Improvement To Consider
+==============================
+1. We notice that /var/www/html required world read/write permission, the reason is we required to symlink db folder as individual username. If we can improve nginx.conf, with some url rewrite we may avoid this requirement
+2. /var/php-fpm required world read/write permission cause we park all log,socket and pid at this folder, cause the WAS we no define rules to create home directory by every individual user. If you define rules as WAS to create home directory by user, then you can improve /usr/local/bin/startfpm.sh and nginx.conf, put/fetch socket/pid/log from user's home directory.
+3. At the moment, we still required every dba to ssh into WAS, run 1 time /usr/local/bin/startfpm.sh, then the specific dba able to access via web interface. Once server restart this activities need to reperform. I have no better ideal to automate the task cause we required kerberos certificate in user session. Easiest approach is ssh. If there is expert can provide better approach in will be good.
+4. At the moment adminer required us to manually type user id and password (we shall define exactly match the uid with our session uid), I temporary can't find suitable adminer plugin to by pass requirement of type in user id and password. Hope future I have time to remove requirement of type uid/password
+5. The php-fpm.conf configuration may required to tune, like session time out or etc when run long mysql queries.
