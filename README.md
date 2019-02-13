@@ -71,7 +71,9 @@ Setup Web Administration Server (WDS)
 [Remarks]
 * we required dba1 login via ssh, start own php services via port 9999, then web interface able to borrow kerberos credential to access mysql
 * if we have 100 dba, we required 100 dba ssh into WDS, and start own php services using different port number
-* this allow dba manage all db server under INT.MYDOMAIN.COM, but it is totally not secure, dont stop here.
-* when dba1 close ssh, the port 9999 not accessible anymore
+* this allow dba manage all db server under INT.MYDOMAIN.COM, but it is totally not secure, dont stop here, suitable approache to secure web interface is using OPENID/Oauth2 hookup freeipa user database
+* when dba1 close ssh, the port 9999 not accessible anymore, we need to make individual session run as background services
+* adminer required us to define database server ourself, we wish to define database server list in setting file, then we can pick which server to login easily.
+
 
 
