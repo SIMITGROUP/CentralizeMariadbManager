@@ -20,10 +20,10 @@ Requirements
 Todo
 ========
 1. Setup 1 Freeipa (Kerberos and Ldap) as identify server (IPA), assume domain int.example.com (Realm INT.EXAMPLE.COM)
-2. Join all database server (DBS) and 1 Web Administration Server (WDS), and 1 Single Sign On Server (SSOS) into domain
+2. Join all database server (DBS) and 1 Web Administration Server (WAS), and 1 Single Sign On Server (SSOS) into domain
 3. Configure all DBS, to support kerberos authentication (pam_gssapi)
 4. Configure SSOS, to allow IPA user login via OPENID/Oauth2
-5. Install and Configure WDS so that every individual dba have dedicated php-fpm running background
+5. Install and Configure WAS so that every individual dba have dedicated php-fpm running background
 
 Setup IPA Server
 ================
@@ -57,7 +57,7 @@ flush privileges;
 7. Your database server is work fine, and you can define which dba can access this database server as grant command at step 5.
 
 
-Setup Web Administration Server (WDS)
+Setup Web Administration Server (WAS)
 =====================================
 1. Setup ubuntu 18.04, update latest, set host as wds.int.mydomain.com (192.168.0.100/24)
 2. You may required additional network interface with public ip, so that dba can access via internet (example 100.100.100.100)
@@ -70,10 +70,45 @@ Setup Web Administration Server (WDS)
 
 [Remarks]
 * we required dba1 login via ssh, start own php services via port 9999, then web interface able to borrow kerberos credential to access mysql
-* if we have 100 dba, we required 100 dba ssh into WDS, and start own php services using different port number
+* if we have 100 dba, we required 100 dba ssh into WAS, and start own php services using different port number
 * this allow dba manage all db server under INT.MYDOMAIN.COM, but it is totally not secure, dont stop here, suitable approache to secure web interface is using OPENID/Oauth2 hookup freeipa user database
 * when dba1 close ssh, the port 9999 not accessible anymore, we need to make individual session run as background services
 * adminer required us to define database server ourself, we wish to define database server list in setting file, then we can pick which server to login easily.
 
 
 
+Setup Single Sign On Server (Keycloak)
+==================================
+1. Setup ubuntu server, set host as keycloak.int.mydomain.com (192.168.0.200/24), update to latest and install ssh and screen (learn how to use ctrl-a = switch session,ctrl-a-c = create new session, ctl-a-d = detash session)
+2. You required to setup additional network interface and public ip so that dba can access via internet (example 100.100.100.101)
+3. Join into ipa
+4. login as admin (from INT.MYDOMAIN.COM) via ssh, install keycloak at /opt using guide: https://www.keycloak.org/docs/latest/getting_started/index.html
+5. under screen, start standalone instance, and detach via ctrl-a-d so that terminate ssh the keycloak remain running
+6. login to http://192.168.0.200/auth/admin, create any new real: int.mydomain.com. access to new realm
+7. Under user federation, add ldap provider, define display name 'int.mydomain.com', override 
+```
+UUID LDAP attribute = uid
+Connection URL = ldap://192.168.0.1 
+Users DN = cn=users,cn=accounts,dc=int,dc=myexample,dc=com
+Bind DN = uid=admin,cn=users,cn=accounts,dc=int,dc=myexample,dc=com
+Bind Credential = your_admin_password
+```
+8. Try test connection and test authentication, you shall get successful result
+9. Save and Syncronize all user, you will notice dba1,2.... all will sync into keycloak
+10.Go to 'Clients', add new client id `dba-sso`, Root URL  `https://192.168.0.100`, save
+11.Change setting:
+```
+Enable = On
+Consent Required = On
+Display Client On Consent Screen = On
+Access Type = Confidential
+Valid Redirect URIs = https://192.168.0.100/*, https://WAS_public_URL/*
+```
+12. Save, and switch to 'Credentials', remain client authenticator as 'Client and Secret', copy string `Secret' (xxxxx-xxx-xx-xxx)
+[Remark]
+* You keycloak have individual user database, in our case it sync from freeipa, and every online authentication it will check via freeipa. in another word, freeipa user/password = mariadb user/password = keycloak user/password
+* In real environment, you shall have public ip for this server, install nginx to reverse proxy keycloak web ui, secure by ssl
+
+Configure WAS To Support Keycloak and Run Session as PHP-FPM
+==================================
+This 
