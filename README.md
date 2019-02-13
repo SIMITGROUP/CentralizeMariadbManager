@@ -54,5 +54,22 @@ grant all on *.* to dba1@'%' identified via gssapi using 'dba1@INT.MYDOMAIN.COM'
 flush privileges;
 ```
 6. under terminal, run below command `mysql -u dba1 `, you shall able to see mydb1 and mydb2, without supply password cause it using kerberos session to authenticate.
+7. Your database server is work fine, and you can define which dba can access this database server as grant command at step 5.
 
+
+Setup Web Administration Server (WDS)
+=====================================
+1. Setup ubuntu 18.04, update latest, set host as wds.int.mydomain.com (192.168.0.100/24)
+2. You may required additional network interface with public ip, so that dba can access via internet (example 100.100.100.100)
+3. Join into freeipa
+4. define HBAC rules to allow dba1/2... to access this server
+5. run script as https://gist.github.com/kstan79/028df3e715cac2b4d63e0b003b1233c7 (may need to tweak according php version or etc)
+6. Download adminer https://www.adminer.org
+7. ssh dba1 into wds.int.mydomain.com, run `php -S '0.0.0.0:9999' adminer.php`, then using browser to browse http://192.168.0.100:9999
+8. From web interface, put driver: mysql, server: 192.168.0.10, user: dba1, pass: <any u wish>. You shall able to access db1 as expected
+
+[Remarks]
+* we required dba1 login via ssh, start own php services via port 9999, then web interface able to borrow kerberos credential to access mysql
+* if we have 100 dba, we required 100 dba ssh via ssh, and start own php services using different port number
+* this allow dba manage all db server under INT.MYDOMAIN.COM, but it is totally not secure, dont stop here.
 
