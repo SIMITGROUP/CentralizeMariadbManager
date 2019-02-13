@@ -63,7 +63,7 @@ Setup Web Administration Server (WAS)
 2. You may required additional network interface with public ip, so that dba can access via internet (example 100.100.100.100)
 3. Join into freeipa
 4. define HBAC rules to allow dba1/2... to access this server
-5. run script as https://gist.github.com/kstan79/028df3e715cac2b4d63e0b003b1233c7 (may need to tweak according php version or etc)
+5. We use PHP+Adminer to manage mysql, however php-mysqli is using mysqlnd which is not support pam_gssapi/pam_unix. We need to recompile the php-mysqli extension. Run following script https://gist.github.com/kstan79/028df3e715cac2b4d63e0b003b1233c7 (may need to tweak according php version or etc)
 6. Download adminer https://www.adminer.org
 7. ssh dba1 into wds.int.mydomain.com, run `php -S '0.0.0.0:9999' adminer.php`, then using browser to browse http://192.168.0.100:9999
 8. From web interface, put driver: mysql, server: 192.168.0.10, user: dba1, pass: <any u wish>. You shall able to access db1 as expected
