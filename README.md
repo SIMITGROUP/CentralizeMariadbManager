@@ -111,4 +111,8 @@ Valid Redirect URIs = https://192.168.0.100/*, https://WAS_public_URL/*
 
 Configure WAS To Support Keycloak and Run Session as PHP-FPM
 ==================================
-This 
+Instead of apache, we will use nginx cause it can support multiple php-fpm better.
+```
+sudo apt remove apache2
+sudo apt install nginx php-fpm7.2 
+```
